@@ -46,6 +46,7 @@ def main():
 	msg=st.text_input("Enter a text")
 	if st.button("Predict"):
 		data=[msg]
+		print(" ".join(data))
 		vect=cv.transform(data).toarray()
 		prediction=model.predict(vect)
 		result=prediction[0]
