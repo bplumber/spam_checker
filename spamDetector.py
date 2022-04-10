@@ -12,23 +12,13 @@ import poplib
 from email.parser import Parser
 import pandas as pd
 import numpy as np
-from scipy.stats import randint
-import seaborn as sns # used for plot interactive graph. 
-import matplotlib.pyplot as plt
-import seaborn as sns
-from io import StringIO
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import chi2
-from IPython.display import display
 from sklearn.model_selection import train_test_split
-from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import cross_val_score
-from sklearn.metrics import confusion_matrix
-from sklearn import metrics
 from sklearn.naive_bayes import GaussianNB
 from sklearn.calibration import CalibratedClassifierCV
 
@@ -92,118 +82,122 @@ def main():
 		index = len(mails)
 		print(index)
 		clean_data = []
-		# for i in range(index):
-		print("HERE")
-		for i in range(5):
-			resp, lines, octets = mail_box.retr(i)	
-			msg_content = b'\r\n'.join(lines).decode('utf-8')
-			msg = Parser().parsestr(msg_content)				
-			email_subject = msg.get('Subject')
-				
-			print(email_subject)
-			clean_data.append(email_subject)
+		for i in range(index):
+			try:
+				resp, lines, octets = mail_box.retr(i)	
+				msg_content = b'\r\n'.join(lines).decode('utf-8')
+				msg = Parser().parsestr(msg_content)				
+				email_subject = msg.get('Subject')
+				print(email_subject)
+				clean_data.append(email_subject)
+			except:
+				pass
 		print(clean_data)
 		mail_box.quit()
 		spam = 0
 		ham = 0
 		spam_list = []
 		for i in clean_data:
-			print(data)
-			data=[i]
-			vect=cv.transform(data).toarray()
-			prediction=model.predict(vect)
-			result=prediction[0]
-			if result==1:
-				spam+=1
-				spam_list.append(data)
-			else:
-				ham+=1
+			try:
+				
+				data=[i]
+				vect=cv.transform(data).toarray()
+				prediction=model.predict(vect)
+				result=prediction[0]
+				if result==1:
+					spam+=1
+					spam_list.append(data)
+				else:
+					ham+=1
+			except:
+				pass
 		total = spam+ham
 		st.success("Total number of mails are " + str(total) + ' out of which ' + str(spam) + ' are spam and ' + str(ham) + ' are ham.')	
 		speak("Total number of mails are " + str(total) + ' out of which ' + str(spam) + ' are spam and ' + str(ham) + ' are ham.')
-		# datasetw=pd.read_csv("FINAL_DATASET.csv")
-		# dfw = datasetw[['class','message','Category1']].copy()
-		# dfw['category_id'] = dfw['Category1'].factorize()[0]
-		# category_id_dfw = dfw[['Category1', 'category_id']].drop_duplicates()
-		# category_to_idw = dict(category_id_dfw.values)
-		# id_to_categoryw = dict(category_id_dfw[['category_id', 'Category1']].values)
-		# tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5,
-		# 						ngram_range=(1, 2), 
-		# 						stop_words='english')
-		# features = tfidf.fit_transform(dfw.message).toarray()
-		# labels = dfw.category_id
-		# N = 3
-		# for Category, category_id in sorted(category_to_idw.items()):
-		# 	features_chi2 = chi2(features, labels == category_id)
-		# 	indices = np.argsort(features_chi2[0])
-		# 	feature_names = np.array(tfidf.get_feature_names())[indices]
-		# 	unigrams = [v for v in feature_names if len(v.split(' ')) == 1]
-		# 	bigrams = [v for v in feature_names if len(v.split(' ')) == 2]
-		# Xw = dfw['message'] # Collection of text
-		# yw = dfw['Category1'] # Target or the labels we want to predict
-		# X_trainw, X_testw, y_trainw, y_testw = train_test_split(Xw, yw, 
-		# 													test_size=0.25,
-		# 													random_state = 0)
-		# models = [
-		# 	RandomForestClassifier(n_estimators=100, max_depth=5, random_state=0),
-		# 	LinearSVC(),
-		# 	MultinomialNB(),
-		# 	GaussianNB()
-		# ]
-		# CV = 5
-		# cv_dfw = pd.DataFrame(index=range(CV * len(models)))
-		# entries = []
-		# for model in models:
-		# 	model_name = model.__class__.__name__
-		# 	accuracies = cross_val_score(model, features, labels, scoring='accuracy', cv=CV)
-		# 	for fold_idx, accuracy in enumerate(accuracies):
-		# 		entries.append((model_name, fold_idx, accuracy))
-		# cv_dfw = pd.DataFrame(entries, columns=['model_name', 'fold_idx', 'accuracy'])
-		# mean_accuracy = cv_dfw.groupby('model_name').accuracy.mean()
-		# std_accuracy = cv_dfw.groupby('model_name').accuracy.std()
-		# acc = pd.concat([mean_accuracy, std_accuracy], axis= 1, 
-		# 		ignore_index=True)
-		# acc.columns = ['Mean Accuracy', 'Standard deviation']
-		# X_trainw, X_testw, y_trainw, y_testw,indices_trainw,indices_testw = train_test_split(features, 
-		# 															labels, 
-		# 															dfw.index, test_size=0.25, 
-		# 															random_state=1)
-		# model = LinearSVC()
-		# model.fit(X_trainw, y_trainw)
-		# y_predw = model.predict(X_testw)
-		# calibrated_svc = CalibratedClassifierCV(base_estimator=model,
-		# 										cv="prefit")
-		# calibrated_svc.fit(X_trainw,y_trainw)
-		# predicted = calibrated_svc.predict(X_testw)
-		# model.fit(features, labels)
-		# N = 4
-		# for Category, category_id in sorted(category_to_idw.items()):
-		# 	indices = np.argsort(model.coef_[category_id])
-		# 	feature_names = np.array(tfidf.get_feature_names())[indices]
-		# 	unigrams = [v for v in reversed(feature_names) if len(v.split(' ')) == 1][:N]
-		# 	bigrams = [v for v in reversed(feature_names) if len(v.split(' ')) == 2][:N]
-		# X_trainw, X_testw, y_trainw, y_testw = train_test_split(Xw, dfw['category_id'], 
-		# 													test_size=0.25,
-		# 													random_state = 0)
-		# tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5,
-		# 						ngram_range=(1, 2), 
-		# 						stop_words='english')
-		# fitted_vectorizer = tfidf.fit(X_trainw)
-		# tfidf_vectorizer_vectors = fitted_vectorizer.transform(X_trainw)
-		# m = LinearSVC().fit(tfidf_vectorizer_vectors, y_trainw)
-		# m1=CalibratedClassifierCV(base_estimator=m,
-		# 										cv="prefit").fit(tfidf_vectorizer_vectors, y_trainw)
-		# category = []
-		# for i in spam_list:
-		# 	message=i
-		# 	text=message
-		# 	t=fitted_vectorizer.transform([text])
-		# 	category.append(id_to_categoryw[m1.predict(t)[0]])
-		# 	# print(id_to_categoryw[m1.predict(t)[0]])
-		# st.success("The categories of the spam mail are.")	
-		# speak("The categories of the spam mail are.")
-		# for i, j in zip(spam_list, category):
-		# 	st.error(i + " | + " + j)
+		datasetw=pd.read_csv("FINAL_DATASET.csv")
+		dfw = datasetw[['class','message','Category1']].copy()
+		dfw['category_id'] = dfw['Category1'].factorize()[0]
+		category_id_dfw = dfw[['Category1', 'category_id']].drop_duplicates()
+		category_to_idw = dict(category_id_dfw.values)
+		id_to_categoryw = dict(category_id_dfw[['category_id', 'Category1']].values)
+		tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5,
+								ngram_range=(1, 2), 
+								stop_words='english')
+		features = tfidf.fit_transform(dfw.message).toarray()
+		labels = dfw.category_id
+		N = 3
+		for Category, category_id in sorted(category_to_idw.items()):
+			features_chi2 = chi2(features, labels == category_id)
+			indices = np.argsort(features_chi2[0])
+			feature_names = np.array(tfidf.get_feature_names())[indices]
+			unigrams = [v for v in feature_names if len(v.split(' ')) == 1]
+			bigrams = [v for v in feature_names if len(v.split(' ')) == 2]
+		Xw = dfw['message'] 
+		yw = dfw['Category1'] 
+		X_trainw, X_testw, y_trainw, y_testw = train_test_split(Xw, yw, 
+															test_size=0.25,
+															random_state = 0)
+		models = [
+			RandomForestClassifier(n_estimators=100, max_depth=5, random_state=0),
+			LinearSVC(),
+			MultinomialNB(),
+			GaussianNB()
+		]
+		CV = 5
+		cv_dfw = pd.DataFrame(index=range(CV * len(models)))
+		entries = []
+		for model in models:
+			model_name = model.__class__.__name__
+			accuracies = cross_val_score(model, features, labels, scoring='accuracy', cv=CV)
+			for fold_idx, accuracy in enumerate(accuracies):
+				entries.append((model_name, fold_idx, accuracy))
+		cv_dfw = pd.DataFrame(entries, columns=['model_name', 'fold_idx', 'accuracy'])
+		mean_accuracy = cv_dfw.groupby('model_name').accuracy.mean()
+		std_accuracy = cv_dfw.groupby('model_name').accuracy.std()
+		acc = pd.concat([mean_accuracy, std_accuracy], axis= 1, 
+				ignore_index=True)
+		acc.columns = ['Mean Accuracy', 'Standard deviation']
+		X_trainw, X_testw, y_trainw, y_testw,indices_trainw,indices_testw = train_test_split(features, 
+																	labels, 
+																	dfw.index, test_size=0.25, 
+																	random_state=1)
+		model = LinearSVC()
+		model.fit(X_trainw, y_trainw)
+		y_predw = model.predict(X_testw)
+		calibrated_svc = CalibratedClassifierCV(base_estimator=model,
+												cv="prefit")
+		calibrated_svc.fit(X_trainw,y_trainw)
+		predicted = calibrated_svc.predict(X_testw)
+		model.fit(features, labels)
+		N = 4
+		for Category, category_id in sorted(category_to_idw.items()):
+			indices = np.argsort(model.coef_[category_id])
+			feature_names = np.array(tfidf.get_feature_names())[indices]
+			unigrams = [v for v in reversed(feature_names) if len(v.split(' ')) == 1][:N]
+			bigrams = [v for v in reversed(feature_names) if len(v.split(' ')) == 2][:N]
+		X_trainw, X_testw, y_trainw, y_testw = train_test_split(Xw, dfw['category_id'], 
+															test_size=0.25,
+															random_state = 0)
+		tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5,
+								ngram_range=(1, 2), 
+								stop_words='english')
+		fitted_vectorizer = tfidf.fit(X_trainw)
+		tfidf_vectorizer_vectors = fitted_vectorizer.transform(X_trainw)
+		m = LinearSVC().fit(tfidf_vectorizer_vectors, y_trainw)
+		m1=CalibratedClassifierCV(base_estimator=m,
+												cv="prefit").fit(tfidf_vectorizer_vectors, y_trainw)
+		category = []
+		for i in spam_list:
+			message=i
+			text=message
+			t=fitted_vectorizer.transform(text)
+			category.append(id_to_categoryw[m1.predict(t)[0]])
+			# print(id_to_categoryw[m1.predict(t)[0]])
+		st.success("The categories of the spam mail are.")	
+		speak("The categories of the spam mail are.")
+		for i, j in zip(spam_list, category):
+			print(i,j)
+			st.error(str(i) + " | + " + str(j))
 
 
 		
