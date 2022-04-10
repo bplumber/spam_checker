@@ -1,0 +1,31 @@
+body {
+    background-color: #060118;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.6;
+    color: white
+}
+
+div.css-10trblm {
+    font-family: "IBM Plex Sans", sans-serif;
+    /* margin-bottom: -1rem; */
+    margin: auto;
+    width: 50%;
+    padding: 10px;
+}
+
+
+/* #input1 {
+    margin: auto;
+    width: 50%;
+    border: 3px solid green;
+    padding: 10px;
+} */
+
+input {
+    border-color: #2A6EF0;
+}
+
+.st-br {
+    background-color: #2A6EF0;
+}

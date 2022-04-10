@@ -51,9 +51,8 @@ def main():
 	pickle.dump(model,open("spam.pkl","wb"))
 	pickle.dump(cv,open("vectorizer.pkl","wb"))
 	clf=pickle.load(open("spam.pkl","rb"))
-	st.title("Email Spam Classification app")
-	st.subheader("Build with Streamlit & Python")
-	st.text("Created:Romil")
+	st.title("Wham Spam!")
+	st.subheader("Created by: Steve")
 	
 	msg=st.text_input("Enter a text")
 	if st.button("Predict"):
