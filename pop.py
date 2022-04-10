@@ -1,27 +1,30 @@
 import poplib
+from email.parser import Parser
 user_name = 'capscrap01@gmail.com' 
-    
 passwd = 'Burhan@69'
-pop3_server_domain = 'pop3.gmail.com'
+pop3_server_domain = 'pop.gmail.com'
 pop3_server_port = '995'
-print("9")
-# Connect to pop3 email server.
-mail_box = poplib.POP3_SSL(pop3_server_domain, pop3_server_port) 
-mail_box.user(user_name) 
+mail_box = poplib.POP3_SSL(pop3_server_domain, pop3_server_port)
+print(mail_box)
+mail_box.set_debuglevel(1)
+pop3_server_welcome_msg = mail_box.getwelcome().decode('utf-8')
+mail_box.user(user_name)
 mail_box.pass_(passwd)
-print("14") 
-# Get number of existing emails.
-number_of_messages = len(mail_box.list()[1])
-print("15")
-# Loop in the all emails.
-for i in range(number_of_messages):
-    # Get one email.
-    for msg in mail_box.retr(i+1)[1]:
-        # Get the email from address. 
-        fromm = msg.get('b.plumber@somaiya.edu')
-        if(fromm.indexOf('b.plumber@somaiya.edu')>-1):
-            print(msg)
-        else:
-            print('This message is not the one you want')
-mail_box.quit()
+print(mail_box.list())
+resp, mails, octets = mail_box.list()
 
+print(octets)
+index = len(mails)
+print(index)
+clean_data = []
+for i in range(5):
+    try:
+        resp, lines, octets = mail_box.retr(i)
+        msg_content = b'\r\n'.join(lines).decode('utf-8')
+        msg = Parser().parsestr(msg_content)
+        email_subject = msg.get('Subject')
+        clean_data.append(email_subject)
+    except:
+        pass
+print(clean_data)
+mail_box.quit()

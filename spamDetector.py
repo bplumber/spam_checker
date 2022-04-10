@@ -2,19 +2,36 @@ import pickle
 import streamlit as st 
 from win32com.client import Dispatch
 import pandas as pd
-import nltk
-import numpy as np
-from nltk.corpus import stopwords
-import string
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 import pickle
 import pythoncom
-import imaplib, email
-import imp
 import re
-import xml
+import poplib
+from email.parser import Parser
+import pandas as pd
+import numpy as np
+from scipy.stats import randint
+import seaborn as sns # used for plot interactive graph. 
+import matplotlib.pyplot as plt
+import seaborn as sns
+from io import StringIO
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_selection import chi2
+from IPython.display import display
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import confusion_matrix
+from sklearn import metrics
+from sklearn.naive_bayes import GaussianNB
+from sklearn.calibration import CalibratedClassifierCV
+
 CLEANR = re.compile(r'<[^>]+>') 
 pythoncom.CoInitialize()
 
@@ -61,69 +78,135 @@ def main():
 		else:
 			st.success("This is a ham mail")	
 			speak("This is a ham mail")
-	user=st.text_input("Enter your email: ")
-	password = st.text_input("Enter a password", type="password")
+	user_name=st.text_input("Enter your email: ")
+	passwd = st.text_input("Enter a password", type="password")
 	if st.button("Check"):
-		imap_url = 'imap.gmail.com'
-		def cleanhtml(raw_html):
-			clean = re.compile('<.*?>')
-			return CLEANR.sub('', raw_html)
-		def get_body(msg):
-			if msg.is_multipart():
-				return get_body(msg.get_payload(0))
-			else:
-				return msg.get_payload(None, True)
-		def search(key, value, con):
-			result, data = con.search(None, key, '"{}"'.format(value))
-			return data
-		def get_emails(result_bytes):
-			msgs = []
-			for num in result_bytes[0].split():
-				typ, data = con.fetch(num, '(RFC822)')
-				msgs.append(data)
-		
-			return msgs
-		print("33")
-		con = imaplib.IMAP4_SSL(imap_url)
-		print("36")
-		con.login(user, password)
-		print("40")
-		con.select('Inbox')
-		print("43")
-		msgs = get_emails(search('FROM', 'b.plumber@somaiya.edu', con))
-		print("41")
-		n_data = []
-		for msg in msgs[::-1]:
-			for sent in msg:
-				if type(sent) is tuple:
-					content = str(sent[1], 'utf-8')
-					data = str(content)
-					try:
-						indexstart = data.find("ltr")
-						data2 = data[indexstart + 5: len(data)]
-						indexend = data2.find("</div>")
-						n_data.append(data2[0: indexend])
-					except UnicodeEncodeError as e:
-						pass
+		pop3_server_domain = 'pop.gmail.com'
+		pop3_server_port = '995'
+		mail_box = poplib.POP3_SSL(pop3_server_domain, pop3_server_port) 
+		mail_box.set_debuglevel(1)
+		pop3_server_welcome_msg = mail_box.getwelcome().decode('utf-8')
+		mail_box.user(user_name)
+		mail_box.pass_(passwd)
+		resp, mails, octets = mail_box.list()
+		index = len(mails)
+		print(index)
 		clean_data = []
-		for i in n_data:
-			temp = cleanhtml(i)
-			clean_data.append(temp)
+		# for i in range(index):
+		print("HERE")
+		for i in range(5):
+			resp, lines, octets = mail_box.retr(i)	
+			msg_content = b'\r\n'.join(lines).decode('utf-8')
+			msg = Parser().parsestr(msg_content)				
+			email_subject = msg.get('Subject')
+				
+			print(email_subject)
+			clean_data.append(email_subject)
+		print(clean_data)
+		mail_box.quit()
 		spam = 0
 		ham = 0
+		spam_list = []
 		for i in clean_data:
+			print(data)
 			data=[i]
-			print(" ".join(data))
 			vect=cv.transform(data).toarray()
 			prediction=model.predict(vect)
 			result=prediction[0]
 			if result==1:
 				spam+=1
+				spam_list.append(data)
 			else:
 				ham+=1
 		total = spam+ham
-		st.success("Total number of mails are " + str(total) + 'out of which ' + str(spam) + 'are spam and ' + str(ham) + 'are ham.')	
-		speak("Total number of mails are " + str(total) + 'out of which ' + str(spam) + 'are spam and ' + str(ham) + 'are ham.')
+		st.success("Total number of mails are " + str(total) + ' out of which ' + str(spam) + ' are spam and ' + str(ham) + ' are ham.')	
+		speak("Total number of mails are " + str(total) + ' out of which ' + str(spam) + ' are spam and ' + str(ham) + ' are ham.')
+		# datasetw=pd.read_csv("FINAL_DATASET.csv")
+		# dfw = datasetw[['class','message','Category1']].copy()
+		# dfw['category_id'] = dfw['Category1'].factorize()[0]
+		# category_id_dfw = dfw[['Category1', 'category_id']].drop_duplicates()
+		# category_to_idw = dict(category_id_dfw.values)
+		# id_to_categoryw = dict(category_id_dfw[['category_id', 'Category1']].values)
+		# tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5,
+		# 						ngram_range=(1, 2), 
+		# 						stop_words='english')
+		# features = tfidf.fit_transform(dfw.message).toarray()
+		# labels = dfw.category_id
+		# N = 3
+		# for Category, category_id in sorted(category_to_idw.items()):
+		# 	features_chi2 = chi2(features, labels == category_id)
+		# 	indices = np.argsort(features_chi2[0])
+		# 	feature_names = np.array(tfidf.get_feature_names())[indices]
+		# 	unigrams = [v for v in feature_names if len(v.split(' ')) == 1]
+		# 	bigrams = [v for v in feature_names if len(v.split(' ')) == 2]
+		# Xw = dfw['message'] # Collection of text
+		# yw = dfw['Category1'] # Target or the labels we want to predict
+		# X_trainw, X_testw, y_trainw, y_testw = train_test_split(Xw, yw, 
+		# 													test_size=0.25,
+		# 													random_state = 0)
+		# models = [
+		# 	RandomForestClassifier(n_estimators=100, max_depth=5, random_state=0),
+		# 	LinearSVC(),
+		# 	MultinomialNB(),
+		# 	GaussianNB()
+		# ]
+		# CV = 5
+		# cv_dfw = pd.DataFrame(index=range(CV * len(models)))
+		# entries = []
+		# for model in models:
+		# 	model_name = model.__class__.__name__
+		# 	accuracies = cross_val_score(model, features, labels, scoring='accuracy', cv=CV)
+		# 	for fold_idx, accuracy in enumerate(accuracies):
+		# 		entries.append((model_name, fold_idx, accuracy))
+		# cv_dfw = pd.DataFrame(entries, columns=['model_name', 'fold_idx', 'accuracy'])
+		# mean_accuracy = cv_dfw.groupby('model_name').accuracy.mean()
+		# std_accuracy = cv_dfw.groupby('model_name').accuracy.std()
+		# acc = pd.concat([mean_accuracy, std_accuracy], axis= 1, 
+		# 		ignore_index=True)
+		# acc.columns = ['Mean Accuracy', 'Standard deviation']
+		# X_trainw, X_testw, y_trainw, y_testw,indices_trainw,indices_testw = train_test_split(features, 
+		# 															labels, 
+		# 															dfw.index, test_size=0.25, 
+		# 															random_state=1)
+		# model = LinearSVC()
+		# model.fit(X_trainw, y_trainw)
+		# y_predw = model.predict(X_testw)
+		# calibrated_svc = CalibratedClassifierCV(base_estimator=model,
+		# 										cv="prefit")
+		# calibrated_svc.fit(X_trainw,y_trainw)
+		# predicted = calibrated_svc.predict(X_testw)
+		# model.fit(features, labels)
+		# N = 4
+		# for Category, category_id in sorted(category_to_idw.items()):
+		# 	indices = np.argsort(model.coef_[category_id])
+		# 	feature_names = np.array(tfidf.get_feature_names())[indices]
+		# 	unigrams = [v for v in reversed(feature_names) if len(v.split(' ')) == 1][:N]
+		# 	bigrams = [v for v in reversed(feature_names) if len(v.split(' ')) == 2][:N]
+		# X_trainw, X_testw, y_trainw, y_testw = train_test_split(Xw, dfw['category_id'], 
+		# 													test_size=0.25,
+		# 													random_state = 0)
+		# tfidf = TfidfVectorizer(sublinear_tf=True, min_df=5,
+		# 						ngram_range=(1, 2), 
+		# 						stop_words='english')
+		# fitted_vectorizer = tfidf.fit(X_trainw)
+		# tfidf_vectorizer_vectors = fitted_vectorizer.transform(X_trainw)
+		# m = LinearSVC().fit(tfidf_vectorizer_vectors, y_trainw)
+		# m1=CalibratedClassifierCV(base_estimator=m,
+		# 										cv="prefit").fit(tfidf_vectorizer_vectors, y_trainw)
+		# category = []
+		# for i in spam_list:
+		# 	message=i
+		# 	text=message
+		# 	t=fitted_vectorizer.transform([text])
+		# 	category.append(id_to_categoryw[m1.predict(t)[0]])
+		# 	# print(id_to_categoryw[m1.predict(t)[0]])
+		# st.success("The categories of the spam mail are.")	
+		# speak("The categories of the spam mail are.")
+		# for i, j in zip(spam_list, category):
+		# 	st.error(i + " | + " + j)
+
+
+		
 
 		
 main()	
